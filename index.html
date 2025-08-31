@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unity Package Extractor (Browser)</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&family=Noto+Sans+KR&family=Noto+Sans&display=swap" rel="stylesheet">
     <style>
         body {
@@ -207,7 +206,7 @@
             constructor() {}
 
             async extract(arrayBuffer) {
-                const unzipped = pako.ungzip(new Uint8Array(arrayBuffer));
+                const unzipped = fflate.gunzipSync(new Uint8Array(arrayBuffer));
                 return this.parseTarball(unzipped);
             }
 
@@ -219,7 +218,7 @@
                     const header = data.slice(offset, offset + 512);
                     const nameBuffer = header.slice(0, 100);
                     const name = new TextDecoder().decode(nameBuffer).replace(/\0/g, '').trim();
-                    
+
                     const sizeBuffer = header.slice(124, 136);
                     const size = parseInt(new TextDecoder().decode(sizeBuffer).trim(), 8);
 
@@ -423,12 +422,12 @@
         }
 
         async function downloadCategory(extension, files) {
-            const zip = new JSZip();
+            const zipObj = {};
             files.forEach(file => {
                 const filePath = maintainStructureCheckbox.checked ? file.path : file.path.split('/').pop();
-                zip.file(filePath, file.content);
+                zipObj[filePath] = file.content;
             });
-            const content = await zip.generateAsync({ type: 'blob' });
+            const content = new Blob([fflate.zipSync(zipObj)]);
             const link = document.createElement('a');
             link.href = URL.createObjectURL(content);
             link.download = `${extension}_files.zip`;
@@ -436,15 +435,15 @@
         }
 
         async function downloadAll() {
-            const zip = new JSZip();
+            const zipObj = {};
             for (const [path, content] of Object.entries(extractedFiles)) {
                 if (excludeMetaCheckbox.checked && path.endsWith('.meta')) {
                     continue;
                 }
                 const filePath = maintainStructureCheckbox.checked ? path : path.split('/').pop();
-                zip.file(filePath, content);
+                zipObj[filePath] = content;
             }
-            const content = await zip.generateAsync({ type: 'blob' });
+            const content = new Blob([fflate.zipSync(zipObj)]);
             const link = document.createElement('a');
             link.href = URL.createObjectURL(content);
             link.download = 'all_files.zip';
