@@ -107,7 +107,10 @@ p {
 
 #pngGrid {
     display: grid;
-    /* Grid columns are set via JS style attribute for dynamic sizing */
+    /* Use CSS variable for efficient resizing without DOM reconstruction */
+    --grid-item-size: 130px;
+    /* Default matches approx 30% scale */
+    grid-template-columns: repeat(auto-fill, minmax(var(--grid-item-size), 1fr));
     gap: 1px;
     /* Tighter, more precise gap like native iOS Photos */
     margin-bottom: 40px;

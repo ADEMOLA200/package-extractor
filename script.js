@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let extractedFiles = {};
+    let activeObjectUrls = [];
     let selectedPaths = new Set();
 
     // --- DOM Elements ---
@@ -195,15 +196,15 @@ document.addEventListener('DOMContentLoaded', () => {
         cb.addEventListener('change', () => displayExtractedFiles(extractedFiles));
     });
 
-    pngGridScale.addEventListener('input', () => {
-        const categorizedFiles = {};
-        for (const [path, content] of Object.entries(extractedFiles)) {
-            if (excludeMetaCheckbox.checked && path.endsWith('.meta')) continue;
-            const extension = path.split('.').pop().toLowerCase();
-            if (!categorizedFiles[extension]) categorizedFiles[extension] = [];
-            categorizedFiles[extension].push({ path, content });
-        }
-        updatePngGrid(categorizedFiles);
+    pngGridScale.addEventListener('input', (e) => {
+        const scaleVal = parseInt(e.target.value, 10) || 30;
+        // Map 0-100 to roughly 80px - 250px
+        const minSize = 80;
+        const maxSize = 250;
+        const itemSize = minSize + (scaleVal / 100) * (maxSize - minSize);
+
+        // Update CSS variable only - almost zero cost
+        pngGrid.style.setProperty('--grid-item-size', `${Math.floor(itemSize)}px`);
     });
 
     downloadAllBtn.addEventListener('click', downloadAll);
@@ -280,15 +281,18 @@ document.addEventListener('DOMContentLoaded', () => {
             categorizedFiles[extension].push({ path, content });
         }
 
-        // --- Gallery View (Grid) always processes PNGs specially if enabled ---
-        if (showPngGridCheckbox.checked && categorizedFiles['png']) {
+        // --- Gallery View (Grid) for images ---
+        const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'bmp'];
+        const hasImages = imageExtensions.some(ext => categorizedFiles[ext] && categorizedFiles[ext].length > 0);
+
+        if (showPngGridCheckbox.checked && hasImages) {
             updatePngGrid(categorizedFiles);
         }
 
         // --- List View for everything else (or PNGs if grid disabled) ---
         if (categorizeByExtensionCheckbox.checked) {
             for (const [extension, catFiles] of Object.entries(categorizedFiles)) {
-                if (extension === 'png' && showPngGridCheckbox.checked) continue; // Skip PNGs in list
+                if (imageExtensions.includes(extension) && showPngGridCheckbox.checked) continue; // Skip images in list if grid is on
 
                 const category = document.createElement('div');
                 category.className = 'category';
@@ -369,8 +373,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updatePngGrid(categorizedFiles) {
-        const pngFiles = categorizedFiles['png'] || [];
-        if (pngFiles.length === 0) {
+        // Cleanup previous URLs to prevent memory leaks
+        if (activeObjectUrls.length > 0) {
+            activeObjectUrls.forEach(url => URL.revokeObjectURL(url));
+            activeObjectUrls = [];
+        }
+
+        const imageFiles = [];
+        ['png', 'jpg', 'jpeg', 'gif', 'bmp'].forEach(ext => {
+            if (categorizedFiles[ext]) {
+                imageFiles.push(...categorizedFiles[ext]);
+            }
+        });
+
+        if (imageFiles.length === 0) {
             pngGrid.style.display = 'none';
             pngGridControls.style.display = 'none';
             return;
@@ -385,17 +401,22 @@ document.addEventListener('DOMContentLoaded', () => {
             pngGridControls.prepend(gridSelectAllBtn);
         }
 
+        // Initialize size based on current slider value
         const scaleVal = parseInt(pngGridScale.value, 10) || 30;
-        // Map 0-100 to roughly 80px - 250px
         const minSize = 80;
         const maxSize = 250;
         const itemSize = minSize + (scaleVal / 100) * (maxSize - minSize);
+        pngGrid.style.setProperty('--grid-item-size', `${Math.floor(itemSize)}px`);
 
-        pngGrid.style.gridTemplateColumns = `repeat(auto-fill, minmax(${Math.floor(itemSize)}px, 1fr))`;
+        imageFiles.forEach(file => {
+            const ext = file.path.split('.').pop().toLowerCase();
+            let mimeType = `image/${ext}`;
+            if (ext === 'jpg') mimeType = 'image/jpeg';
 
-        pngFiles.forEach(file => {
-            const blob = new Blob([file.content], { type: 'image/png' });
+            const blob = new Blob([file.content], { type: mimeType });
             const url = URL.createObjectURL(blob);
+            activeObjectUrls.push(url); // Track for cleanup
+
             const node = document.createElement('div');
             node.className = 'png-node';
             if (checkerboardBgCheckbox.checked) node.classList.add('checkerboard-bg');
