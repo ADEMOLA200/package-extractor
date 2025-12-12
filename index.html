@@ -54,8 +54,32 @@
 
     <div id="pngGridControls" style="display:none;">
         <!-- gridSelectAllBtn injected here by JS -->
-        <label for="pngGridScale" data-lang="pngGridScale">Grid scale:</label>
-        <input type="range" id="pngGridScale" min="0" max="100" step="5" value="30">
+        <div class="slider-wrapper" style="display: flex; align-items: center; gap: 8px;">
+            <!-- Small Grid Icon -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+            </svg>
+
+            <input type="range" id="pngGridScale" min="0" max="100" step="5" value="30" style="width: 120px;">
+
+            <!-- Large Grid Icon -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            </svg>
+        </div>
+
+        <select id="sortOrder"
+            style="margin-left: auto; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-color); background: var(--card-bg);">
+            <option value="name_asc" data-lang="sortNameAsc">Name (A-Z)</option>
+            <option value="name_desc" data-lang="sortNameDesc">Name (Z-A)</option>
+            <option value="size_asc" data-lang="sortSizeAsc">Size (Smallest)</option>
+            <option value="size_desc" data-lang="sortSizeDesc">Size (Largest)</option>
+        </select>
     </div>
 
     <div id="pngGrid" style="display:none;"></div>
