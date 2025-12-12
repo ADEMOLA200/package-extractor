@@ -1,0 +1,333 @@
+:root {
+    --primary-color: #007AFF;
+    /* iOS Blue */
+    --primary-hover: #0056b3;
+    --background-color: #f2f2f7;
+    /* iOS System Gray 6 */
+    --card-bg: #ffffff;
+    --text-color: #1c1c1e;
+    --text-muted: #8e8e93;
+    --border-color: #d1d1d6;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.5;
+    padding-bottom: 120px;
+    /* Space for sticky footer */
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 700;
+}
+
+p {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+}
+
+/* Drop Zone */
+#dropZone {
+    border: 2px dashed #aeaeb2;
+    border-radius: var(--radius-xl);
+    width: 100%;
+    height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0 40px 0;
+    background-color: var(--card-bg);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-weight: 600;
+    color: #8e8e93;
+    font-size: 1.1rem;
+}
+
+#dropZone:hover {
+    border-color: var(--primary-color);
+    background-color: #e4eaff;
+    color: var(--primary-color);
+}
+
+/* Options Panel */
+.options-container {
+    background: var(--card-bg);
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    margin-bottom: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-container input[type="checkbox"] {
+    accent-color: var(--primary-color);
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.checkbox-container label {
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+/* Gallery / Grid Layout (iPhone Style) */
+#pngGridControls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 0 10px;
+}
+
+#pngGrid {
+    display: grid;
+    /* Grid columns are set via JS style attribute for dynamic sizing */
+    gap: 1px;
+    /* Tighter, more precise gap like native iOS Photos */
+    margin-bottom: 40px;
+    background-color: var(--card-bg);
+    /* Ensure contrast */
+    padding: 1px;
+    /* Optional border-like effect */
+    border-radius: var(--radius-sm);
+}
+
+.png-node {
+    position: relative;
+    background-color: #fff;
+    aspect-ratio: 1 / 1;
+    /* Perfect square */
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.png-node img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Fill the square */
+    transition: opacity 0.2s;
+}
+
+.png-node.checkerboard-bg img {
+    /* If checkerboard is desired, we might want 'contain' to see transparency? 
+       But 'iPhone style' implies 'cover'. User asked for checkerboard previously.
+       Let's stick to cover for aesthetics, but maybe add a toggle for 'fit' if needed later.
+       For now, object-fit: cover is the most "Library" look.
+    */
+    background-image: linear-gradient(45deg, #e5e5ea 25%, transparent 25%),
+        linear-gradient(-45deg, #e5e5ea 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e5e5ea 75%),
+        linear-gradient(-45deg, transparent 75%, #e5e5ea 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+}
+
+/* Selection State */
+.png-node.selected img {
+    opacity: 0.8;
+}
+
+.png-node.selected::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 3px solid var(--primary-color);
+    box-sizing: border-box;
+    z-index: 2;
+}
+
+/* Selection Checkmark Overlay */
+.selection-indicator {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    background-color: rgba(0, 0, 0, 0.1);
+    z-index: 3;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    /* Clicking the cell triggers it */
+}
+
+.png-node.selected .selection-indicator {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.png-node.selected .selection-indicator::before {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Hide labels in grid view to act like iPhone library */
+.png-node-label {
+    display: none;
+}
+
+/* File Size Badge - Make it subtle or hide in gallery view? 
+   Let's keep it very minimal or maybe hide it for the clean look.
+   User asked for "iPhone library" look which has NO text overlays usually.
+   I'll hide it by default in this mode, or maybe show on hover.
+*/
+.png-node-size {
+    display: none;
+}
+
+/* List View (for non-image files) */
+.category h3 {
+    margin-top: 30px;
+    font-size: 1.2rem;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#fileList ul {
+    list-style: none;
+    padding: 0;
+}
+
+#fileList li {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+}
+
+#fileList li:first-child {
+    border-top-left-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-md);
+}
+
+#fileList li:last-child {
+    border-bottom-left-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
+    border-bottom: none;
+}
+
+.file-checkbox {
+    margin-right: 15px;
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary-color);
+}
+
+#fileList li a {
+    color: var(--text-color);
+    text-decoration: none;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Buttons */
+button {
+    background-color: #e5e5ea;
+    color: var(--primary-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background-color: #d1d1d6;
+}
+
+.download-all button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 12px 24px;
+    font-size: 1.1rem;
+}
+
+.download-all button:hover {
+    background-color: var(--primary-hover);
+}
+
+/* Sticky Selection Bar */
+#selectionBar {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(150%);
+    background-color: rgba(28, 28, 30, 0.9);
+    /* Dark translucent */
+    backdrop-filter: blur(10px);
+    color: white;
+    padding: 16px 32px;
+    border-radius: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 2000;
+    transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    width: fit-content;
+    min-width: 320px;
+    justify-content: space-between;
+}
+
+#selectionBar.visible {
+    transform: translateX(-50%) translateY(0);
+}
+
+#selectionCount {
+    font-weight: 600;
+}
+
+#downloadSelectedBtn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+#clearSelectionBtn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
